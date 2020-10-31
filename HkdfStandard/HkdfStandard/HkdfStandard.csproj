@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.6; netstandard2.1</TargetFrameworks>
+    <Authors>Andrei Milto</Authors>
+    <Product>HKDF.Standard</Product>
+    <Copyright>Copyright © Andrei Milto 2020</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/andreimilto/HKDF.Standard</RepositoryUrl>
+    <PackageTags>HKDF, KDF, Key, Derivation</PackageTags>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageId>HKDF.Standard</PackageId>
+    <Description>Open-source implementation of HKDF (HMAC-based Key-Derivation Function) in .NET Standard.</Description>
+    <Version>1.0.0-beta.1</Version>
+    <PackageProjectUrl>https://github.com/andreimilto/HKDF.Standard</PackageProjectUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.1'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard1.6'">
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+
+</Project>
