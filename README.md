@@ -17,7 +17,47 @@
 
 ## Getting Started
 
-TBD
+Install the NuGet package [`HKDF.Standard`](https://www.nuget.org/packages/HKDF.Standard/) from [nuget.org](https://www.nuget.org).
+
+Use the methods of the `Hkdf` class (namespace `HkdfStandard`) to perform extraction, expansion and key derivation:
+
+```csharp
+using HkdfStandard;
+...
+
+// Input values:
+byte[] inputKeyMaterial = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+int outputLength = 16;
+byte[] info = Encoding.UTF8.GetBytes("My context-specific information.");
+byte[] salt = new byte[32];
+using (var rng = RandomNumberGenerator.Create())
+    rng.GetBytes(salt);
+
+// Results:
+byte[] pseudoRandomKey;
+byte[] outputKeyMaterial;
+
+// Perform the Extract stage of HKDF with or without the salt:
+pseudoRandomKey = Hkdf.Extract(HashAlgorithmName.SHA256, inputKeyMaterial, salt);
+pseudoRandomKey = Hkdf.Extract(HashAlgorithmName.SHA256, inputKeyMaterial);
+
+// Perform the Expand stage of HKDF with or without the context information:
+outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey, outputLength, info);
+outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey, outputLength);
+
+// Perform the entire HKDF cycle in one go (Extract + Expand)
+// optionally using the salt and/or the context information:
+outputKeyMaterial = Hkdf.DeriveKey(HashAlgorithmName.SHA256, inputKeyMaterial, outputLength, salt, info);
+outputKeyMaterial = Hkdf.DeriveKey(HashAlgorithmName.SHA256, inputKeyMaterial, outputLength, salt);
+outputKeyMaterial = Hkdf.DeriveKey(HashAlgorithmName.SHA256, inputKeyMaterial, outputLength, info: info);
+outputKeyMaterial = Hkdf.DeriveKey(HashAlgorithmName.SHA256, inputKeyMaterial, outputLength);
+```
+
+For information about:
+* when the `Extract` stage can be skipped, please refer to the [RFC 5869 section 3.3](https://tools.ietf.org/html/rfc5869#section-3.3).
+* how to use `salt` and when it can be omitted, see the [RFC 5869 section 3.1](https://tools.ietf.org/html/rfc5869#section-3.1).
+* how to use `info` and when it can be omitted, see the [RFC 5869 section 3.2](https://tools.ietf.org/html/rfc5869#section-3.2).
+* HKDF in general, please refer to the [original paper](https://eprint.iacr.org/2010/264.pdf).
 
 
 ## Functionality
