@@ -145,7 +145,7 @@ TBD
 
 ## Using **HKDF.Standard** with `ECDiffieHellman`
 
-HKDF is commonly used in conjunction with Deffie-Hellman (finite field or elliptic curve), where the Diffie-Hellman value (shared secret) is passed through HKDF to derive one or more shared keys.
+HKDF is commonly used in conjunction with Diffie-Hellman (finite field or elliptic curve), where the Diffie-Hellman value (shared secret) is passed through HKDF to derive one or more shared keys.
 
 Unfortunately, this scenario cannot be implemented straightforward with the [`ECDiffieHellman`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman?view=netcore-3.1) class because it
 [doesn't allow the export of raw shared secret](https://docs.microsoft.com/en-us/dotnet/standard/security/cross-platform-cryptography#ecdh). However, there is a method [`ECDiffieHellman.DeriveKeyFromHmac`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman.derivekeyfromhmac?view=netcore-3.1) that returns the value of shared secret that was passed through HMAC &mdash; this is the same transformation that the input key material undergoes when being passed through the HKDF's Extract stage. Therefore, the workaround is to skip the Extract stage of HKDF and substitute it with [`ECDiffieHellman`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman?view=netcore-3.1)'s additional HMAC operation:
