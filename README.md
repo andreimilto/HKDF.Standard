@@ -145,4 +145,26 @@ TBD
 
 ## Using **HKDF.Standard** with `ECDiffieHellman`
 
-TBD
+HKDF is commonly used in conjunction with Deffie-Hellman (finite field or elliptic curve), where the Diffie-Hellman value (shared secret) is passed through HKDF to derive one or more shared keys.
+
+Unfortunatelly, this scenario cannot be implemented straightforward with the [`ECDiffieHellman`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman?view=netcore-3.1) class because it
+[doesn't allow the export of raw shared secret](https://docs.microsoft.com/en-us/dotnet/standard/security/cross-platform-cryptography#ecdh). However, there is a method [`ECDiffieHellman.DeriveKeyFromHmac`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman.derivekeyfromhmac?view=netcore-3.1) that returns the value of shared secret that was passed through HMAC &mdash; this is the same transformation that the input key material undergoes when being passed through the HKDF's Extract stage. Therefore, the workaround is to skip the Extract stage of HKDF and substistute it with [`ECDiffieHellman`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman?view=netcore-3.1)'s additional HMAC operation:
+
+```csharp
+byte[] salt = ...
+byte[] info = ...
+int outputLength = ...
+
+// My instance of ECDH, contains a new randomly generated key pair:
+using var myEcdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
+
+// Other party's instance of ECDH, contains a new randomly generated key pair:
+using var otherEcdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
+
+// Derive the shared ECDH secret and pass it through HMAC along with the salt (as HMAC's message and key respectively).
+// This is equivalent to deriving a raw shared secret and running it through the HKDF Extract, which gives a shared pseudorandom key:
+byte[] pseudoRandomKey = myEcdh.DeriveKeyFromHmac(otherEcdh.PublicKey, HashAlgorithmName.SHA256, salt);
+
+// Perform the Expand stage of HKDF as usual:
+byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey, outputLength, info);
+```
