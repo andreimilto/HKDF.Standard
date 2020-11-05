@@ -60,6 +60,56 @@ For information about:
 * HKDF in general, please refer to the [original paper](https://eprint.iacr.org/2010/264.pdf).
 
 
+## Performance
+
+Based on the results of key derivation benchmark, **HKDF.Standard** is:
+* **2.5 - 6.8 times faster** than **NSec**
+* **1.3 - 5.4 times faster** than **BouncyCastle**
+* **practically on par** with **.NET 5**, being about **4% - 18% slower**
+
+![Chart: derivation of 128-bit key](/img/Chart_KeyDerivation_128bit.png)
+![Chart: derivation of 4096-bit key](/img/Chart_KeyDerivation_4096bit.png)
+
+*256-bit input key material, 256-bit salt, 256-bit context info*
+
+*Windows 10 Pro x64, .NET 5.0-rc2, AMD Ryzen 7 Pro 1700X, single thread, [Portable.BouncyCastle v1.8.8](https://www.nuget.org/packages/Portable.BouncyCastle/1.8.8),
+[NSec v20.2.0](https://www.nuget.org/packages/NSec.Cryptography/20.2.0)*
+
+
+## Migration to and from **.NET 5**'s HKDF
+
+* [Methods](#functionality) in the **HKDF.Standard** library have the same signatures as in the **.NET 5**'s [`HKDF` class](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hkdf?view=net-5.0), which makes it is simple to migrate from one HKDF implementation to the other.
+* Microsoft's implementation of HKDF will be available only in **.NET 5** and onwards. Consider using **HKDF.Standard** if your project targets one of the older frameworks. If later you decide to upgrade the project to **.NET 5**, it will be relatively easy to swap the implementation of HKDF with the Microsoft's, if necessary.
+* **.NET 5** is not going to have a long-term support. The next LTS release will be [**.NET 6** in November 2021](https://github.com/dotnet/core/blob/master/roadmap.md), so you might consider skipping the **.NET 5** altogether and using the **HKDF.Standard** with your projects until **.NET 6** comes along.
+
+
+## Using **HKDF.Standard** with `ECDiffieHellman`
+
+HKDF is commonly used in conjunction with Diffie-Hellman (finite field or elliptic curve), where the Diffie-Hellman value (shared secret) is passed through HKDF to derive one or more shared keys.
+
+Unfortunately, this scenario cannot be implemented straightforward with the [`ECDiffieHellman`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman?view=netcore-3.1) class because it
+[doesn't allow the export of raw shared secret](https://docs.microsoft.com/en-us/dotnet/standard/security/cross-platform-cryptography#ecdh). However, there is a method [`ECDiffieHellman.DeriveKeyFromHmac`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman.derivekeyfromhmac?view=netcore-3.1) that returns the value of shared secret that was passed through HMAC &mdash; this is the same transformation that the input key material undergoes when being passed through the HKDF's Extract stage. Therefore, the workaround is to skip the Extract stage of HKDF and substitute it with [`ECDiffieHellman`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman?view=netcore-3.1)'s additional HMAC operation:
+
+```csharp
+byte[] salt = ...
+byte[] info = ...
+int outputLength = ...
+
+// My instance of ECDH, contains a new randomly generated key pair:
+using var myEcdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
+
+// Other party's instance of ECDH, contains a new randomly generated key pair:
+using var otherEcdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
+
+// Derive the shared ECDH secret and pass it through HMAC along with the salt (as HMAC's message and key respectively).
+// This is equivalent to deriving a raw shared secret and running it through the HKDF Extract, which gives a shared pseudorandom key:
+byte[] pseudoRandomKey = myEcdh.DeriveKeyFromHmac(otherEcdh.PublicKey, HashAlgorithmName.SHA256, salt);
+
+// Perform the Expand stage of HKDF as usual:
+byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey, outputLength, info);
+```
+
+
 ## Functionality
 
 ### `byte[]` Methods
@@ -120,53 +170,3 @@ For information about:
 * **Xamarin.Android 10.0** and higher
 * **UWP** - currently not supported (expected in the future)
 * **Unity** - currently not supported (expected in the future)
-
-
-## Performance
-
-Based on the results of key derivation benchmark, **HKDF.Standard** is:
-* **2.5 - 6.8 times faster** than **NSec**
-* **1.3 - 5.4 times faster** than **BouncyCastle**
-* **practically on par** with **.NET 5**, being about **4% - 18% slower**
-
-![Chart: derivation of 128-bit key](/img/Chart_KeyDerivation_128bit.png)
-![Chart: derivation of 4096-bit key](/img/Chart_KeyDerivation_4096bit.png)
-
-*256-bit input key material, 256-bit salt, 256-bit context info*
-
-*Windows 10 Pro x64, .NET 5.0-rc2, AMD Ryzen 7 Pro 1700X, single thread, [Portable.BouncyCastle v1.8.8](https://www.nuget.org/packages/Portable.BouncyCastle/1.8.8),
-[NSec v20.2.0](https://www.nuget.org/packages/NSec.Cryptography/20.2.0)*
-
-
-## Migration to and from **.NET 5**'s HKDF
-
-* [Methods](#functionality) in the **HKDF.Standard** library have the same signatures as in the **.NET 5**'s [`HKDF` class](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hkdf?view=net-5.0), which makes it is simple to migrate from one HKDF implementation to the other.
-* Microsoft's implementation of HKDF will be available only in **.NET 5** and onwards. Consider using **HKDF.Standard** if your project targets one of the older frameworks. If later you decide to upgrade the project to **.NET 5**, it will be relatively easy to swap the implementation of HKDF with the Microsoft's, if necessary.
-* **.NET 5** is not going to have a long-term support. The next LTS release will be [**.NET 6** in November 2021](https://github.com/dotnet/core/blob/master/roadmap.md), so you might consider skipping the **.NET 5** altogether and using the **HKDF.Standard** with your projects until **.NET 6** comes along.
-
-
-## Using **HKDF.Standard** with `ECDiffieHellman`
-
-HKDF is commonly used in conjunction with Diffie-Hellman (finite field or elliptic curve), where the Diffie-Hellman value (shared secret) is passed through HKDF to derive one or more shared keys.
-
-Unfortunately, this scenario cannot be implemented straightforward with the [`ECDiffieHellman`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman?view=netcore-3.1) class because it
-[doesn't allow the export of raw shared secret](https://docs.microsoft.com/en-us/dotnet/standard/security/cross-platform-cryptography#ecdh). However, there is a method [`ECDiffieHellman.DeriveKeyFromHmac`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman.derivekeyfromhmac?view=netcore-3.1) that returns the value of shared secret that was passed through HMAC &mdash; this is the same transformation that the input key material undergoes when being passed through the HKDF's Extract stage. Therefore, the workaround is to skip the Extract stage of HKDF and substitute it with [`ECDiffieHellman`](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.ecdiffiehellman?view=netcore-3.1)'s additional HMAC operation:
-
-```csharp
-byte[] salt = ...
-byte[] info = ...
-int outputLength = ...
-
-// My instance of ECDH, contains a new randomly generated key pair:
-using var myEcdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
-
-// Other party's instance of ECDH, contains a new randomly generated key pair:
-using var otherEcdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
-
-// Derive the shared ECDH secret and pass it through HMAC along with the salt (as HMAC's message and key respectively).
-// This is equivalent to deriving a raw shared secret and running it through the HKDF Extract, which gives a shared pseudorandom key:
-byte[] pseudoRandomKey = myEcdh.DeriveKeyFromHmac(otherEcdh.PublicKey, HashAlgorithmName.SHA256, salt);
-
-// Perform the Expand stage of HKDF as usual:
-byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey, outputLength, info);
-```
