@@ -140,7 +140,9 @@ Based on the results of key derivation benchmark, **HKDF.Standard** is:
 
 ## Migration to and from **.NET 5**'s HKDF
 
-TBD
+* [Methods](#functionality) in the **HKDF.Standard** library have the same signatures as in the **.NET 5**'s [`HKDF` class](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hkdf?view=net-5.0), which makes it is simple to migrate from one HKDF implementation to the other.
+* Microsoft's implementation of HKDF will be available only in **.NET 5** and onwards. Consider using **HKDF.Standard** if your project targets one of the older frameworks. If later you decide to upgrade the project to **.NET 5**, it will be relatively easy to swap the implementation of HKDF with the Microsoft's, if necessary.
+* **.NET 5** is not going to have a long-term support. The next LTS release will be [**.NET 6** in November 2021](https://github.com/dotnet/core/blob/master/roadmap.md), so you might consider skipping the **.NET 5** altogether and using the **HKDF.Standard** with your projects until **.NET 6** comes along.
 
 
 ## Using **HKDF.Standard** with `ECDiffieHellman`
