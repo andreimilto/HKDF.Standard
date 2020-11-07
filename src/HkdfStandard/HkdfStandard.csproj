@@ -7,11 +7,11 @@
     <Copyright>Copyright © Andrei Milto 2020</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/andreimilto/HKDF.Standard</RepositoryUrl>
-    <PackageTags>HKDF, KDF, Key, Derivation</PackageTags>
+    <PackageTags>hkdf, kdf, key, derivation, hmac, cryptography, crypto</PackageTags>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageId>HKDF.Standard</PackageId>
     <Description>Open-source implementation of HKDF (HMAC-based Key-Derivation Function) in .NET Standard.</Description>
-    <Version>1.0.0-beta.1</Version>
+    <Version>1.0.0</Version>
     <PackageProjectUrl>https://github.com/andreimilto/HKDF.Standard</PackageProjectUrl>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
