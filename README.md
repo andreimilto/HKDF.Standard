@@ -1,3 +1,7 @@
+<a href="https://www.nuget.org/packages/HKDF.Standard/">
+  <img src="https://img.shields.io/static/v1?label=Get%20Package&message=NuGet&color=brightgreen&style=plastic" height="24px" alt="Get NuGet Package">
+</a>
+
 # HKDF.Standard
 
 [.NET Standard](https://docs.microsoft.com/en-us/dotnet/standard/net-standard) implementation of [HKDF (HMAC-based Key Derivation Function)](https://tools.ietf.org/html/rfc5869).
