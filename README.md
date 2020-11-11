@@ -1,6 +1,19 @@
 <a href="https://www.nuget.org/packages/HKDF.Standard/">
-  <img src="https://img.shields.io/static/v1?label=Get%20Package&message=NuGet&color=brightgreen&style=plastic" height="24px" alt="Get NuGet Package">
+  <img src="https://img.shields.io/static/v1?label=Get%20Package&message=NuGet&color=brightgreen&style=plastic" height="28px" alt="Get NuGet Package">
 </a>
+
+<p>
+  <a href="https://ci.appveyor.com/project/AndreiMilto/hkdf-standard">
+    <img alt="AppVeyor Build" src="https://img.shields.io/appveyor/build/AndreiMilto/hkdf-standard?style=flat-square">
+  </a>
+  <a href="https://ci.appveyor.com/project/AndreiMilto/hkdf-standard/build/tests">
+    <img alt="AppVeyor Tests" src="https://img.shields.io/appveyor/tests/AndreiMilto/hkdf-standard?style=flat-square">
+  </a>
+  <a href="https://github.com/andreimilto/HKDF.Standard/blob/main/LICENSE">
+    <img alt="GitHub License" src="https://img.shields.io/github/license/andreimilto/HKDF.Standard?style=flat-square">
+  </a>
+</p>
+
 
 # HKDF.Standard
 
