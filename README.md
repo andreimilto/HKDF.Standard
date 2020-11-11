@@ -119,17 +119,17 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 ### `byte[]` Methods
 
 * ```csharp
-  byte[] Extract(HashAlgorithmName hashAlgorithmName, byte[] ikm, byte[]? salt);
+  byte[] Extract(HashAlgorithmName hashAlgorithmName, byte[] ikm, byte[]? salt = null);
   ```
   Extracts a pseudorandom key from the input key material.
   
 * ```csharp
-  byte[] Expand(HashAlgorithmName hashAlgorithmName, byte[] prk, int outputLength, byte[]? info);
+  byte[] Expand(HashAlgorithmName hashAlgorithmName, byte[] prk, int outputLength, byte[]? info = null);
   ```
   Expands the pseudorandom key into an output keying material.
 
 * ```csharp
-  byte[] DeriveKey(HashAlgorithmName hashAlgorithmName, byte[] ikm, int outputLength, byte[]? salt, byte[]? info);
+  byte[] DeriveKey(HashAlgorithmName hashAlgorithmName, byte[] ikm, int outputLength, byte[]? salt = null, byte[]? info = null);
   ```
   Derives an output keying material from the input key material (performs extraction and extension) in one go.
 
