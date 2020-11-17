@@ -34,21 +34,19 @@
 
 ## Getting Started
 
-Install the NuGet package [`HKDF.Standard`](https://www.nuget.org/packages/HKDF.Standard/) from [nuget.org](https://www.nuget.org).
+Install the NuGet package [`HKDF.Standard`](https://www.nuget.org/packages/HKDF.Standard/).
 
-Use the methods of the `Hkdf` class (namespace `HkdfStandard`) to perform extraction, expansion and key derivation:
+Use the methods of the `Hkdf` class to perform extraction, expansion and key derivation:
 
 ```csharp
 using HkdfStandard;
 ...
 
 // Input values:
-byte[] inputKeyMaterial = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
-int outputLength = 16;
-byte[] info = Encoding.UTF8.GetBytes("My context-specific information.");
-byte[] salt = new byte[32];
-using (var rng = RandomNumberGenerator.Create())
-    rng.GetBytes(salt);
+byte[] inputKeyMaterial = ...;
+byte[] salt = ...;
+byte[] info = ...;
+int outputLength = ...;
 
 // Results:
 byte[] pseudoRandomKey;
