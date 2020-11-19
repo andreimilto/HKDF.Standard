@@ -1,5 +1,6 @@
 ﻿using HkdfStandard.Test.HkdfTestAux;
 using System;
+using System.Linq;
 using System.Security.Cryptography;
 using Xunit;
 
@@ -39,6 +40,24 @@ namespace HkdfStandard.Test
         {
             byte[] actualPrk = Hkdf.Extract(testVector.Hash, testVector.Ikm, testVector.Salt);
             Assert.Equal(testVector.Prk, actualPrk);
+        }
+
+        [Theory]
+        [InlineData(new byte[0], null)]
+        [InlineData(new byte[0], new byte[0])]
+        [InlineData(new byte[0], new byte[] { 255 })]
+        [InlineData(new byte[] { 255 }, null)]
+        [InlineData(new byte[] { 255 }, new byte[0])]
+        [InlineData(new byte[] { 255 }, new byte[] { 255 })]
+        public void ExtractBytes_DoesNotModifyInputs(byte[] ikm, byte[] salt)
+        {
+            byte[] originalIkm = ikm.ToArray();
+            byte[] originalSalt = salt?.ToArray();
+
+            Hkdf.Extract(HashAlgorithmName.SHA256, ikm, salt);
+
+            Assert.Equal(originalIkm, ikm);
+            Assert.Equal(originalSalt, salt);
         }
 
         #endregion
@@ -121,6 +140,25 @@ namespace HkdfStandard.Test
             Assert.Equal(testVector.Okm, actualOkm);
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData(new byte[0])]
+        [InlineData(new byte[] { 255 })]
+        public void ExpandBytes_DoesNotModifyInputs(byte[] info)
+        {
+            HashAlgorithmName hashAlgorithmName = HashAlgorithmName.SHA256;
+            byte[] prk = Enumerable.Repeat<byte>(255, 32).ToArray();
+            int outputLength = 50;
+
+            byte[] originalPrk = prk.ToArray();
+            byte[] originalInfo = info?.ToArray();
+
+            Hkdf.Expand(hashAlgorithmName, prk, outputLength, info);
+
+            Assert.Equal(originalPrk, prk);
+            Assert.Equal(originalInfo, info);
+        }
+
         #endregion
 
 
@@ -183,6 +221,41 @@ namespace HkdfStandard.Test
         {
             byte[] actualOkm = Hkdf.DeriveKey(testVector.Hash, testVector.Ikm, testVector.OutputLength, testVector.Salt, testVector.Info);
             Assert.Equal(testVector.Okm, actualOkm);
+        }
+
+        [Theory]
+        [InlineData(new byte[0], null, null)]
+        [InlineData(new byte[0], null, new byte[0])]
+        [InlineData(new byte[0], null, new byte[] { 255 })]
+        [InlineData(new byte[0], new byte[0], null)]
+        [InlineData(new byte[0], new byte[0], new byte[0])]
+        [InlineData(new byte[0], new byte[0], new byte[] { 255 })]
+        [InlineData(new byte[0], new byte[] { 255 }, null)]
+        [InlineData(new byte[0], new byte[] { 255 }, new byte[0])]
+        [InlineData(new byte[0], new byte[] { 255 }, new byte[] { 255 })]
+        [InlineData(new byte[] { 255 }, null, null)]
+        [InlineData(new byte[] { 255 }, null, new byte[0])]
+        [InlineData(new byte[] { 255 }, null, new byte[] { 255 })]
+        [InlineData(new byte[] { 255 }, new byte[0], null)]
+        [InlineData(new byte[] { 255 }, new byte[0], new byte[0])]
+        [InlineData(new byte[] { 255 }, new byte[0], new byte[] { 255 })]
+        [InlineData(new byte[] { 255 }, new byte[] { 255 }, null)]
+        [InlineData(new byte[] { 255 }, new byte[] { 255 }, new byte[0])]
+        [InlineData(new byte[] { 255 }, new byte[] { 255 }, new byte[] { 255 })]
+        public void DeriveKeyBytes_DoesNotModifyInputs(byte[] ikm, byte[] salt, byte[] info)
+        {
+            HashAlgorithmName hashAlgorithmName = HashAlgorithmName.SHA256;
+            int outputLength = 50;
+
+            byte[] originalIkm = ikm.ToArray();
+            byte[] originalSalt = salt?.ToArray();
+            byte[] originalInfo = info?.ToArray();
+
+            Hkdf.DeriveKey(hashAlgorithmName, ikm, outputLength, salt, info);
+
+            Assert.Equal(originalIkm, ikm);
+            Assert.Equal(originalSalt, salt);
+            Assert.Equal(originalInfo, info);
         }
 
         #endregion
