@@ -227,20 +227,28 @@ namespace HkdfStandard.Test
         [InlineData(new byte[0], null, null)]
         [InlineData(new byte[0], null, new byte[0])]
         [InlineData(new byte[0], null, new byte[] { 255 })]
+#pragma warning disable xUnit1025 // InlineData should be unique within the Theory it belongs to. See the xUnit bug https://github.com/xunit/xunit/issues/1877.
         [InlineData(new byte[0], new byte[0], null)]
+#pragma warning restore xUnit1025 // InlineData should be unique within the Theory it belongs to
         [InlineData(new byte[0], new byte[0], new byte[0])]
         [InlineData(new byte[0], new byte[0], new byte[] { 255 })]
         [InlineData(new byte[0], new byte[] { 255 }, null)]
+#pragma warning disable xUnit1025 // InlineData should be unique within the Theory it belongs to
         [InlineData(new byte[0], new byte[] { 255 }, new byte[0])]
+#pragma warning restore xUnit1025 // InlineData should be unique within the Theory it belongs to
         [InlineData(new byte[0], new byte[] { 255 }, new byte[] { 255 })]
         [InlineData(new byte[] { 255 }, null, null)]
         [InlineData(new byte[] { 255 }, null, new byte[0])]
         [InlineData(new byte[] { 255 }, null, new byte[] { 255 })]
+#pragma warning disable xUnit1025 // InlineData should be unique within the Theory it belongs to
         [InlineData(new byte[] { 255 }, new byte[0], null)]
+#pragma warning restore xUnit1025 // InlineData should be unique within the Theory it belongs to
         [InlineData(new byte[] { 255 }, new byte[0], new byte[0])]
         [InlineData(new byte[] { 255 }, new byte[0], new byte[] { 255 })]
         [InlineData(new byte[] { 255 }, new byte[] { 255 }, null)]
+#pragma warning disable xUnit1025 // InlineData should be unique within the Theory it belongs to
         [InlineData(new byte[] { 255 }, new byte[] { 255 }, new byte[0])]
+#pragma warning restore xUnit1025 // InlineData should be unique within the Theory it belongs to
         [InlineData(new byte[] { 255 }, new byte[] { 255 }, new byte[] { 255 })]
         public void DeriveKeyBytes_DoesNotModifyInputs(byte[] ikm, byte[] salt, byte[] info)
         {
