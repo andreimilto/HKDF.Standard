@@ -69,9 +69,9 @@ outputKeyMaterial = Hkdf.DeriveKey(HashAlgorithmName.SHA256, inputKeyMaterial, o
 ```
 
 For information about:
-* when the `Extract` stage can be skipped, please refer to the [RFC 5869 section 3.3](https://tools.ietf.org/html/rfc5869#section-3.3).
-* how to use `salt` and when it can be omitted, see the [RFC 5869 section 3.1](https://tools.ietf.org/html/rfc5869#section-3.1).
-* how to use `info` and when it can be omitted, see the [RFC 5869 section 3.2](https://tools.ietf.org/html/rfc5869#section-3.2).
+* when the `Extract` stage can be skipped, please refer to the [RFC 5869 section 3.3](https://tools.ietf.org/html/rfc5869#section-3.3);
+* how to use `salt` and when it can be omitted, see the [RFC 5869 section 3.1](https://tools.ietf.org/html/rfc5869#section-3.1);
+* how to use `info` and when it can be omitted, see the [RFC 5869 section 3.2](https://tools.ietf.org/html/rfc5869#section-3.2);
 * HKDF in general, please refer to the [original paper](https://eprint.iacr.org/2010/264.pdf).
 
 
