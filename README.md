@@ -28,7 +28,7 @@
 * [Easy migration](#migration-to-and-from-net-5s-hkdf) to and from the new [HKDF primitive introduced in .NET 5](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hkdf?view=net-5.0).
 * [One-shot methods](#functionality) for extraction, expansion and key derivation.
 * Supported hash functions: SHA-512, SHA-384, SHA-256, SHA-1 and MD5.
-* Available in .NET 5, .NET Core, .NET Framework, Mono, Xamarin, UWP and Unity (see [platform support](#platform-support)).
+* Available in .NET 5, .NET Core, .NET Framework, Mono, Blazor WebAssembly, Xamarin, UWP and Unity (see [platform support](#platform-support)).
 * Compliant with [RFC 5869](https://tools.ietf.org/html/rfc5869).
 
 
@@ -172,6 +172,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **.NET Core 1.0** and higher
 * **.NET Framework 4.6.1** and higher
 * **Mono 4.6** and higher
+* **Blazor WebAssembly 3.2.0** and higher
 * **Xamarin.iOS 10.0** and higher
 * **Xamarin.Mac 3.0** and higher
 * **Xamarin.Android 7.0** and higher
@@ -182,6 +183,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **.NET 5** and higher
 * **.NET Core 3.0** and higher
 * **Mono 6.4** and higher
+* **Blazor WebAssembly 3.2.0** and higher
 * **Xamarin.iOS 12.16** and higher
 * **Xamarin.Mac 5.16** and higher
 * **Xamarin.Android 10.0** and higher
