@@ -172,7 +172,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **.NET Core 1.0** and higher
 * **.NET Framework 4.6.1** and higher
 * **Mono 4.6** and higher
-* **Blazor WebAssembly 3.2.0** and higher
+* **Blazor WebAssembly 3.2.0** and higher, except for **5.x.x**
 * **Xamarin.iOS 10.0** and higher
 * **Xamarin.Mac 3.0** and higher
 * **Xamarin.Android 7.0** and higher
@@ -183,7 +183,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **.NET 5** and higher
 * **.NET Core 3.0** and higher
 * **Mono 6.4** and higher
-* **Blazor WebAssembly 3.2.0** and higher
+* **Blazor WebAssembly 3.2.0** and higher, except for **5.x.x**
 * **Xamarin.iOS 12.16** and higher
 * **Xamarin.Mac 5.16** and higher
 * **Xamarin.Android 10.0** and higher
