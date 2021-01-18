@@ -137,9 +137,12 @@ namespace HkdfStandard
             if (salt == null)
                 salt = Array.Empty<byte>();
 
-            using (var hmac = CreateHmac(hashAlgorithmName, salt))
+            // Using incremental HMAC because it is faster than non-incremental.
+
+            using (var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, salt))
             {
-                return hmac.ComputeHash(ikm);
+                hmac.AppendData(ikm);
+                return hmac.GetHashAndReset();
             }
         }
 
@@ -244,22 +247,6 @@ namespace HkdfStandard
                 return quotient + 1;
         }
 
-
-        private static HMAC CreateHmac(HashAlgorithmName hashAlgorithmName, byte[] key)
-        {
-            if (hashAlgorithmName == HashAlgorithmName.SHA256)
-                return new HMACSHA256(key);
-            else if (hashAlgorithmName == HashAlgorithmName.SHA384)
-                return new HMACSHA384(key);
-            else if (hashAlgorithmName == HashAlgorithmName.SHA512)
-                return new HMACSHA512(key);
-            else if (hashAlgorithmName == HashAlgorithmName.SHA1)
-                return new HMACSHA1(key);
-            else if (hashAlgorithmName == HashAlgorithmName.MD5)
-                return new HMACMD5(key);
-            else
-                throw new ArgumentOutOfRangeException(nameof(hashAlgorithmName));
-        }
 
         private static IncrementalHash CreateIncrementalHmac(HashAlgorithmName hashAlgorithmName, byte[] key)
         {
@@ -374,12 +361,16 @@ namespace HkdfStandard
                 salt.CopyTo(saltBytes);
                 try
                 {
-                    using (var hmac = CreateHmac(hashAlgorithmName, saltBytes))
+                    // Using incremental HMAC because it is faster than non-incremental.
+
+                    using (var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, saltBytes))
                     {
-                        // The method is supposed to always return true, because the destination buffer will always be large enough to accommodate the HMAC value (https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hashalgorithm.trycomputehash?view=netstandard-2.1).
+                        hmac.AppendData(ikm);
+
+                        // The method is supposed to always return true, because the destination buffer will always be large enough to accommodate the HMAC value (https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1).
                         // However, we still check the returned value just to be on the safe side.
 
-                        if (!hmac.TryComputeHash(ikm, prk, out bytesExtracted))
+                        if (!hmac.TryGetHashAndReset(prk, out bytesExtracted))
                             throw new CryptographicException($"Failed to compute the MAC during the Extract stage of HKDF.");
                     }
                 }
