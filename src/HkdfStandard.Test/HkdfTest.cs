@@ -269,6 +269,8 @@ namespace HkdfStandard.Test
         #endregion
 
 
+#if NETCOREAPP3_1
+
         #region Extract Span<byte>
 
         [Fact]
@@ -450,5 +452,7 @@ namespace HkdfStandard.Test
         }
 
         #endregion
+    
+#endif        
     }
 }
