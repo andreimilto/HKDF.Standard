@@ -157,8 +157,8 @@ namespace HkdfStandard
 
             byte[] result = new byte[outputLength];
             byte[] counter = new byte[1];
-            byte[] previousHmacOutput = Array.Empty<byte>();
-            byte[] currentHmacOutput = Array.Empty<byte>();
+            byte[] previousBlock = Array.Empty<byte>();
+            byte[] currentBlock = Array.Empty<byte>();
             var hmac = CreateIncrementalHmac(hashAlgorithmName, prk);
             try
             {
@@ -166,25 +166,26 @@ namespace HkdfStandard
                 for (int i = 1; i <= blockCount; i++)
                 {
                     counter[0] = (byte)i;
-                    currentHmacOutput = ComposeCurrentBlockAndHmacIt(hmac, previousHmacOutput, info, counter);
+                    currentBlock = GenerateOutputBlock(hmac, previousBlock, info, counter);
 
-                    int subresultOffset = (i - 1) * hmacOutputLength;
-                    int subresultLength = Math.Min(hmacOutputLength, outputLength - subresultOffset);
-                    Buffer.BlockCopy(currentHmacOutput, 0, result, subresultOffset, subresultLength);
+                    int blocktOffset = (i - 1) * hmacOutputLength;
+                    int blockLength = Math.Min(hmacOutputLength, outputLength - blocktOffset);
+                    Buffer.BlockCopy(currentBlock, 0, result, blocktOffset, blockLength);
 
-                    ClearArray(previousHmacOutput);
-                    previousHmacOutput = currentHmacOutput;
+                    ClearArray(previousBlock);
+                    previousBlock = currentBlock;
                 }
             }
             catch
             {
-                ClearArray(previousHmacOutput);
+                ClearArray(previousBlock);
                 throw;
             }
             finally
             {
                 hmac.Dispose();
-                ClearArray(currentHmacOutput);
+                ClearArray(currentBlock);
+                ClearArray(counter);
             }
 
             return result;
@@ -254,9 +255,9 @@ namespace HkdfStandard
         }
 
 
-        private static byte[] ComposeCurrentBlockAndHmacIt(IncrementalHash hmac, byte[] previousBlockMac, byte[] info, byte[] counter)
+        private static byte[] GenerateOutputBlock(IncrementalHash hmac, byte[] previousOutputBlock, byte[] info, byte[] counter)
         {
-            hmac.AppendData(previousBlockMac);
+            hmac.AppendData(previousOutputBlock);
             hmac.AppendData(info);
             hmac.AppendData(counter);
 
@@ -386,55 +387,61 @@ namespace HkdfStandard
         private static unsafe void PerformExpansion(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, ReadOnlySpan<byte> prk, Span<byte> output, ReadOnlySpan<byte> info)
         {
             Span<byte> counter = stackalloc byte[1];
-            Span<byte> previousHmacOutput = stackalloc byte[hmacOutputLength];
-            Span<byte> currentHmacOutput = stackalloc byte[hmacOutputLength];
+            Span<byte> previousBlock = Span<byte>.Empty;
             byte[] prkBytes = new byte[prk.Length];
             fixed (byte* prkBytesPointer = prkBytes)
             {
                 prk.CopyTo(prkBytes);
-                var hmac = CreateIncrementalHmac(hashAlgorithmName, prkBytes);
                 try
                 {
-                    int blockCount = DividePositiveIntegersRoundingUp(output.Length, hmacOutputLength);
-                    for (int i = 1; i <= blockCount; i++)
+                    using var hmac = CreateIncrementalHmac(hashAlgorithmName, prkBytes);
+
+                    int wholeBlockCount = output.Length / hmacOutputLength;
+                    for (int i = 1; i <= wholeBlockCount; i++)
                     {
                         counter[0] = (byte)i;
-                        if (i == 1)
-                            ComposeCurrentBlockAndHmacIt(hmac, Span<byte>.Empty, info, counter, currentHmacOutput);
-                        else
-                            ComposeCurrentBlockAndHmacIt(hmac, previousHmacOutput, info, counter, currentHmacOutput);
+                        var currentBlock = output.Slice((i - 1) * hmacOutputLength, hmacOutputLength);
+                        GenerateOutputBlock(hmac, previousBlock, info, counter, currentBlock);
+                        previousBlock = currentBlock;
+                    }
 
-
-                        int subresultOffset = (i - 1) * hmacOutputLength;
-                        int subresultLength = Math.Min(hmacOutputLength, output.Length - subresultOffset);
-                        currentHmacOutput.Slice(0, subresultLength)
-                                         .CopyTo(output.Slice(subresultOffset));
-
-                        currentHmacOutput.CopyTo(previousHmacOutput);
+                    int bytesWritten = wholeBlockCount * hmacOutputLength;
+                    int bytesLeft = output.Length - bytesWritten;
+                    if (bytesLeft > 0)
+                    {
+                        counter[0]++;
+                        Span<byte> partialBlock = stackalloc byte[hmacOutputLength];
+                        try
+                        {
+                            GenerateOutputBlock(hmac, previousBlock, info, counter, partialBlock);
+                            partialBlock.Slice(0, bytesLeft)
+                                        .CopyTo(output.Slice(bytesWritten));
+                        }
+                        finally
+                        {
+                            partialBlock.Clear();
+                        }
                     }
                 }
                 finally
                 {
-                    hmac.Dispose();
                     ClearArray(prkBytes);
-                    currentHmacOutput.Clear();
-                    previousHmacOutput.Clear();
                     counter.Clear();
                 }
             }
         }
 
 
-        private static void ComposeCurrentBlockAndHmacIt(IncrementalHash hmac, ReadOnlySpan<byte> previousBlockMac, ReadOnlySpan<byte> info, ReadOnlySpan<byte> counter, Span<byte> currentBlockMac)
+        private static void GenerateOutputBlock(IncrementalHash hmac, ReadOnlySpan<byte> previousOutputBlock, ReadOnlySpan<byte> info, ReadOnlySpan<byte> counter, Span<byte> outputBlock)
         {
-            hmac.AppendData(previousBlockMac);
+            hmac.AppendData(previousOutputBlock);
             hmac.AppendData(info);
             hmac.AppendData(counter);
 
             // The method is supposed to always return true, because the destination buffer will always be large enough to accommodate the HMAC value (https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1).
             // However, we still check the returned value just to be on the safe side.
 
-            if (!hmac.TryGetHashAndReset(currentBlockMac, out _))
+            if (!hmac.TryGetHashAndReset(outputBlock, out _))
                 throw new CryptographicException("Failed to compute the MAC for the current HKDF block.");
         }
 
