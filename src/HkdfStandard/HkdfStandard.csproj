@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6; netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3; netstandard2.1</TargetFrameworks>
     <Authors>Andrei Milto</Authors>
     <Product>HKDF.Standard</Product>
     <Copyright>Copyright © Andrei Milto 2020</Copyright>
@@ -22,7 +22,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard1.6'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
 
