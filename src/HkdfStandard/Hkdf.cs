@@ -46,6 +46,29 @@ namespace HkdfStandard
             return PerformExtraction(hashAlgorithmName, ikm, salt);
         }
 
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Extracts a pseudorandom key from the provided input key material using the specified salt value.
+        /// </summary>
+        /// <param name="hashAlgorithmName">The hash algorithm to be used by the HMAC primitive. Supported hash functions: MD5, SHA1, SHA256, SHA384, SHA512.</param>
+        /// <param name="ikm">The input key material.</param>
+        /// <param name="salt">The salt value.</param>
+        /// <param name="prk">The buffer to receive the generated pseudorandom key. Must be at least the size of the hash output to accommodate the pseudorandom key, i.e.: for MD5 - minimum 16 bytes, SHA1 - 20, SHA256 - 32, SHA384 - 48, SHA512 - 64.</param>
+        /// <returns>The size of the extracted pseudorandom key in bytes.</returns>
+        /// <exception cref="ArgumentException">The size of the <paramref name="prk"/> is smaller than the size of the output of hash algorithm.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The hash algorithm specified in the parameter <paramref name="hashAlgorithmName"/> is not supported.</exception>
+        public static int Extract(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> ikm, ReadOnlySpan<byte> salt, Span<byte> prk)
+        {
+            if (!TryGetHashOutputLength(hashAlgorithmName, out int hashOutputLength))
+                throw new ArgumentOutOfRangeException(nameof(hashAlgorithmName), "The specified hash algorithm is not supported.");
+            if (prk.Length < hashOutputLength)
+                throw new ArgumentException($"The supplied pseudorandom key buffer is too small. It must be large enough to accommodate the extracted pseudorandom key, that is, at least {hashOutputLength} bytes in case of {hashAlgorithmName}.", nameof(prk));
+
+            return PerformExtraction(hashAlgorithmName, hashOutputLength, ikm, salt, prk);
+        }
+#endif
+
+
         /// <summary>
         /// Expands the provided pseudorandom key into an output keying material of the desired length using optional context information.
         /// </summary>
@@ -74,8 +97,34 @@ namespace HkdfStandard
             if (outputLength > hashOutputLength * maxOutputLengthCoef)
                 throw new ArgumentOutOfRangeException(nameof(outputLength), $"The specified output length is too large. The maximum size of the output is {maxOutputLengthCoef} times the hash-output-length, i.e. {hashOutputLength * maxOutputLengthCoef} bytes in case of {hashAlgorithmName}.");
 
-            return PerformExpansion(hashAlgorithmName, hashOutputLength, prk, outputLength, info);
+            return PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, outputLength);
         }
+
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Expands the provided pseudorandom key into an output keying material of the desired length using optional context information.
+        /// </summary>
+        /// <param name="hashAlgorithmName">The hash algorithm to be used by the HMAC primitive. Supported hash functions: MD5, SHA1, SHA256, SHA384, SHA512.</param>
+        /// <param name="prk">The pseudorandom key. Must be at least as long as the output of the hash algorithm, i.e.: MD5 - 16 bytes, SHA1 - 20, SHA256 - 32, SHA384 - 48, SHA512 - 64.</param>
+        /// <param name="output">The buffer to receive the generated output keying material (OKM). The OKM produced is of the same size as the buffer. Minimum buffer size - 1 byte, maximum buffer size - 255 times the size of the hash algorithm output in bytes (i.e., MD5 - 4080, SHA1 - 5100, SHA256 - 8160, SHA384 - 12240, SHA512 - 16320).</param>
+        /// <param name="info">The optional context-specific information. If the argument is an empty span, the expansion is performed without context information.</param>
+        /// <exception cref="ArgumentException">The size of the <paramref name="prk"/> is smaller than the size of the output of hash algorithm or the size of the <paramref name="output"/> is invalid (either too small or too large).</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The hash algorithm specified in the parameter <paramref name="hashAlgorithmName"/> is not supported.</exception>
+        public static void Expand(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> prk, Span<byte> output, ReadOnlySpan<byte> info)
+        {
+            if (!TryGetHashOutputLength(hashAlgorithmName, out int hashOutputLength))
+                throw new ArgumentOutOfRangeException(nameof(hashAlgorithmName), "The specified hash algorithm is not supported.");
+            if (prk.Length < hashOutputLength)
+                throw new ArgumentException($"The supplied pseudorandom key is too short. It must be at least as long as the hash-function output, i.e. {hashOutputLength} bytes in case of {hashAlgorithmName}.", nameof(prk));
+            if (output.Length <= 0)
+                throw new ArgumentException("The supplied output buffer is too small. The minimum size of the output buffer is 1 byte.", nameof(output));
+            if (output.Length > hashOutputLength * maxOutputLengthCoef)
+                throw new ArgumentException($"The supplied output buffer is too large. The maximum size of the output buffer is {maxOutputLengthCoef} times the hash-output-length, i.e. {hashOutputLength * maxOutputLengthCoef} bytes in case of {hashAlgorithmName}.", nameof(output));
+
+            PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, output);
+        }
+#endif
+
 
         /// <summary>
         /// Derives the output keying material of the desired length from the input key material using the optional salt and context information.
@@ -110,7 +159,7 @@ namespace HkdfStandard
             byte[] okm;
             try
             {
-                okm = PerformExpansion(hashAlgorithmName, hashOutputLength, prk, outputLength, info);
+                okm = PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, outputLength);
             }
             finally
             {
@@ -118,6 +167,43 @@ namespace HkdfStandard
             }
             return okm;
         }
+
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Derives the output keying material of the desired length from the input key material using the provided salt and context information.
+        /// </summary>
+        /// <remarks>
+        /// This method performs the full HKDF cycle: first extracts a pseudorandom key from the input key material, then expands it into an output keying material.
+        /// </remarks>
+        /// <param name="hashAlgorithmName">The hash algorithm to be used by the HMAC primitive. Supported hash functions: MD5, SHA1, SHA256, SHA384, SHA512.</param>
+        /// <param name="ikm">The input key material.</param>
+        /// <param name="output">The buffer to receive the generated output keying material (OKM). The OKM produced is of the same size as the buffer. The minimum buffer size - 1 byte, maximum buffer size - 255 times the size of the hash algorithm output in bytes (i.e., MD5 - 4080, SHA1 - 5100, SHA256 - 8160, SHA384 - 12240, SHA512 - 16320).</param>
+        /// <param name="salt">The salt value.</param>
+        /// <param name="info">The optional context-specific information. If the argument is an empty span, the key derivation is performed without context information.</param>
+        /// <exception cref="ArgumentException">The length of the <paramref name="output"/> is either too small or too large.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The hash algorithm specified in the parameter <paramref name="hashAlgorithmName"/> is not supported.</exception>
+        public static void DeriveKey(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> ikm, Span<byte> output, ReadOnlySpan<byte> salt, ReadOnlySpan<byte> info)
+        {
+            if (!TryGetHashOutputLength(hashAlgorithmName, out int hashOutputLength))
+                throw new ArgumentOutOfRangeException(nameof(hashAlgorithmName), "The specified hash algorithm is not supported.");
+            if (output.Length <= 0)
+                throw new ArgumentException("The supplied output buffer is too small. The minimum size of the output buffer is 1 byte.", nameof(output));
+            if (output.Length > hashOutputLength * maxOutputLengthCoef)
+                throw new ArgumentException($"The supplied output buffer is too large. The maximum size of the output buffer is {maxOutputLengthCoef} times the hash-output-length, i.e. {hashOutputLength * maxOutputLengthCoef} bytes in case of {hashAlgorithmName}.", nameof(output));
+
+            Span<byte> prk = stackalloc byte[hashOutputLength];
+            try
+            {
+                PerformExtraction(hashAlgorithmName, hashOutputLength, ikm, salt, prk);
+                PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, output);
+            }
+            finally
+            {
+                prk.Clear();
+            }
+        }
+#endif
+
 
 
 #if NETSTANDARD2_1
@@ -147,9 +233,44 @@ namespace HkdfStandard
         }
 
 #if NETSTANDARD2_1
-        private static byte[] PerformExpansion(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, byte[] prk, int outputLength, byte[]? info)
+        private static unsafe int PerformExtraction(HashAlgorithmName hashAlgorithmName, int hashOutputLength, ReadOnlySpan<byte> ikm, ReadOnlySpan<byte> salt, Span<byte> prk)
+        {
+            int bytesExtracted;
+
+            byte[] saltBytes = new byte[salt.Length];
+            fixed (byte* saltBytesPointer = saltBytes)
+            {
+                salt.CopyTo(saltBytes);
+                try
+                {
+                    // Using incremental HMAC because it is faster than non-incremental.
+
+                    using (var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, saltBytes))
+                    {
+                        hmac.AppendData(ikm);
+
+                        // The method is supposed to always return true, because the destination buffer will always be large enough to accommodate the HMAC value (https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1).
+                        // However, we still check the returned value just to be on the safe side.
+
+                        if (!hmac.TryGetHashAndReset(prk, out bytesExtracted))
+                            throw new CryptographicException($"Failed to compute the MAC during the Extract stage of HKDF.");
+                    }
+                }
+                finally
+                {
+                    ClearArray(saltBytes);
+                }
+            }
+
+            return bytesExtracted;
+        }
+#endif
+
+
+#if NETSTANDARD2_1
+        private static byte[] PerformExpansion(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, byte[] prk, byte[]? info, int outputLength)
 #else
-        private static byte[] PerformExpansion(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, byte[] prk, int outputLength, byte[] info)
+        private static byte[] PerformExpansion(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, byte[] prk, byte[] info, int outputLength)
 #endif
         {
             if (info == null)
@@ -159,7 +280,7 @@ namespace HkdfStandard
             byte[] counter = new byte[1];
             byte[] previousBlock = Array.Empty<byte>();
             byte[] currentBlock = Array.Empty<byte>();
-            var hmac = CreateIncrementalHmac(hashAlgorithmName, prk);
+            var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, prk);
             try
             {
                 int blockCount = DividePositiveIntegersRoundingUp(outputLength, hmacOutputLength);
@@ -185,11 +306,58 @@ namespace HkdfStandard
             {
                 hmac.Dispose();
                 ClearArray(currentBlock);
-                ClearArray(counter);
             }
 
             return result;
         }
+
+#if NETSTANDARD2_1
+        private static unsafe void PerformExpansion(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, ReadOnlySpan<byte> prk, ReadOnlySpan<byte> info, Span<byte> output)
+        {
+            Span<byte> counter = stackalloc byte[1];
+            Span<byte> previousBlock = Span<byte>.Empty;
+            byte[] prkBytes = new byte[prk.Length];
+            fixed (byte* prkBytesPointer = prkBytes)
+            {
+                prk.CopyTo(prkBytes);
+                try
+                {
+                    using var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, prkBytes);
+
+                    int wholeBlockCount = output.Length / hmacOutputLength;
+                    for (int i = 1; i <= wholeBlockCount; i++)
+                    {
+                        counter[0] = (byte)i;
+                        var currentBlock = output.Slice((i - 1) * hmacOutputLength, hmacOutputLength);
+                        GenerateOutputBlock(hmac, previousBlock, info, counter, currentBlock);
+                        previousBlock = currentBlock;
+                    }
+
+                    int bytesWritten = wholeBlockCount * hmacOutputLength;
+                    int bytesLeft = output.Length - bytesWritten;
+                    if (bytesLeft > 0)
+                    {
+                        counter[0]++;
+                        Span<byte> partialBlock = stackalloc byte[hmacOutputLength];
+                        try
+                        {
+                            GenerateOutputBlock(hmac, previousBlock, info, counter, partialBlock);
+                            partialBlock.Slice(0, bytesLeft)
+                                        .CopyTo(output.Slice(bytesWritten));
+                        }
+                        finally
+                        {
+                            partialBlock.Clear();
+                        }
+                    }
+                }
+                finally
+                {
+                    ClearArray(prkBytes);
+                }
+            }
+        }
+#endif
 
 
         private static bool TryGetHashOutputLength(HashAlgorithmName hashAlgorithmName, out int outputLength)
@@ -249,12 +417,6 @@ namespace HkdfStandard
         }
 
 
-        private static IncrementalHash CreateIncrementalHmac(HashAlgorithmName hashAlgorithmName, byte[] key)
-        {
-            return IncrementalHash.CreateHMAC(hashAlgorithmName, key);
-        }
-
-
         private static byte[] GenerateOutputBlock(IncrementalHash hmac, byte[] previousOutputBlock, byte[] info, byte[] counter)
         {
             hmac.AppendData(previousOutputBlock);
@@ -264,174 +426,7 @@ namespace HkdfStandard
             return hmac.GetHashAndReset();
         }
 
-
-        private static void ClearArray(byte[] array)
-        {
-            Array.Clear(array, 0, array.Length);
-        }
-
-
-
 #if NETSTANDARD2_1
-
-        /// <summary>
-        /// Extracts a pseudorandom key from the provided input key material using the specified salt value.
-        /// </summary>
-        /// <param name="hashAlgorithmName">The hash algorithm to be used by the HMAC primitive. Supported hash functions: MD5, SHA1, SHA256, SHA384, SHA512.</param>
-        /// <param name="ikm">The input key material.</param>
-        /// <param name="salt">The salt value.</param>
-        /// <param name="prk">The buffer to receive the generated pseudorandom key. Must be at least the size of the hash output to accommodate the pseudorandom key, i.e.: for MD5 - minimum 16 bytes, SHA1 - 20, SHA256 - 32, SHA384 - 48, SHA512 - 64.</param>
-        /// <returns>The size of the extracted pseudorandom key in bytes.</returns>
-        /// <exception cref="ArgumentException">The size of the <paramref name="prk"/> is smaller than the size of the output of hash algorithm.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">The hash algorithm specified in the parameter <paramref name="hashAlgorithmName"/> is not supported.</exception>
-        public static int Extract(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> ikm, ReadOnlySpan<byte> salt, Span<byte> prk)
-        {
-            if (!TryGetHashOutputLength(hashAlgorithmName, out int hashOutputLength))
-                throw new ArgumentOutOfRangeException(nameof(hashAlgorithmName), "The specified hash algorithm is not supported.");
-            if (prk.Length < hashOutputLength)
-                throw new ArgumentException($"The supplied pseudorandom key buffer is too small. It must be large enough to accommodate the extracted pseudorandom key, that is, at least {hashOutputLength} bytes in case of {hashAlgorithmName}.", nameof(prk));
-
-            return PerformExtraction(hashAlgorithmName, hashOutputLength, ikm, salt, prk);
-        }
-
-        /// <summary>
-        /// Expands the provided pseudorandom key into an output keying material of the desired length using optional context information.
-        /// </summary>
-        /// <param name="hashAlgorithmName">The hash algorithm to be used by the HMAC primitive. Supported hash functions: MD5, SHA1, SHA256, SHA384, SHA512.</param>
-        /// <param name="prk">The pseudorandom key. Must be at least as long as the output of the hash algorithm, i.e.: MD5 - 16 bytes, SHA1 - 20, SHA256 - 32, SHA384 - 48, SHA512 - 64.</param>
-        /// <param name="output">The buffer to receive the generated output keying material (OKM). The OKM produced is of the same size as the buffer. Minimum buffer size - 1 byte, maximum buffer size - 255 times the size of the hash algorithm output in bytes (i.e., MD5 - 4080, SHA1 - 5100, SHA256 - 8160, SHA384 - 12240, SHA512 - 16320).</param>
-        /// <param name="info">The optional context-specific information. If the argument is an empty span, the expansion is performed without context information.</param>
-        /// <exception cref="ArgumentException">The size of the <paramref name="prk"/> is smaller than the size of the output of hash algorithm or the size of the <paramref name="output"/> is invalid (either too small or too large).</exception>
-        /// <exception cref="ArgumentOutOfRangeException">The hash algorithm specified in the parameter <paramref name="hashAlgorithmName"/> is not supported.</exception>
-        public static void Expand(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> prk, Span<byte> output, ReadOnlySpan<byte> info)
-        {
-            if (!TryGetHashOutputLength(hashAlgorithmName, out int hashOutputLength))
-                throw new ArgumentOutOfRangeException(nameof(hashAlgorithmName), "The specified hash algorithm is not supported.");
-            if (prk.Length < hashOutputLength)
-                throw new ArgumentException($"The supplied pseudorandom key is too short. It must be at least as long as the hash-function output, i.e. {hashOutputLength} bytes in case of {hashAlgorithmName}.", nameof(prk));
-            if (output.Length <= 0)
-                throw new ArgumentException("The supplied output buffer is too small. The minimum size of the output buffer is 1 byte.", nameof(output));
-            if (output.Length > hashOutputLength * maxOutputLengthCoef)
-                throw new ArgumentException($"The supplied output buffer is too large. The maximum size of the output buffer is {maxOutputLengthCoef} times the hash-output-length, i.e. {hashOutputLength * maxOutputLengthCoef} bytes in case of {hashAlgorithmName}.", nameof(output));
-
-            PerformExpansion(hashAlgorithmName, hashOutputLength, prk, output, info);
-        }
-
-        /// <summary>
-        /// Derives the output keying material of the desired length from the input key material using the provided salt and context information.
-        /// </summary>
-        /// <remarks>
-        /// This method performs the full HKDF cycle: first extracts a pseudorandom key from the input key material, then expands it into an output keying material.
-        /// </remarks>
-        /// <param name="hashAlgorithmName">The hash algorithm to be used by the HMAC primitive. Supported hash functions: MD5, SHA1, SHA256, SHA384, SHA512.</param>
-        /// <param name="ikm">The input key material.</param>
-        /// <param name="output">The buffer to receive the generated output keying material (OKM). The OKM produced is of the same size as the buffer. The minimum buffer size - 1 byte, maximum buffer size - 255 times the size of the hash algorithm output in bytes (i.e., MD5 - 4080, SHA1 - 5100, SHA256 - 8160, SHA384 - 12240, SHA512 - 16320).</param>
-        /// <param name="salt">The salt value.</param>
-        /// <param name="info">The optional context-specific information. If the argument is an empty span, the key derivation is performed without context information.</param>
-        /// <exception cref="ArgumentException">The length of the <paramref name="output"/> is either too small or too large.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">The hash algorithm specified in the parameter <paramref name="hashAlgorithmName"/> is not supported.</exception>
-        public static void DeriveKey(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> ikm, Span<byte> output, ReadOnlySpan<byte> salt, ReadOnlySpan<byte> info)
-        {
-            if (!TryGetHashOutputLength(hashAlgorithmName, out int hashOutputLength))
-                throw new ArgumentOutOfRangeException(nameof(hashAlgorithmName), "The specified hash algorithm is not supported.");
-            if (output.Length <= 0)
-                throw new ArgumentException("The supplied output buffer is too small. The minimum size of the output buffer is 1 byte.", nameof(output));
-            if (output.Length > hashOutputLength * maxOutputLengthCoef)
-                throw new ArgumentException($"The supplied output buffer is too large. The maximum size of the output buffer is {maxOutputLengthCoef} times the hash-output-length, i.e. {hashOutputLength * maxOutputLengthCoef} bytes in case of {hashAlgorithmName}.", nameof(output));
-
-            Span<byte> prk = stackalloc byte[hashOutputLength];
-            try
-            {
-                PerformExtraction(hashAlgorithmName, hashOutputLength, ikm, salt, prk);
-                PerformExpansion(hashAlgorithmName, hashOutputLength, prk, output, info);
-            }
-            finally
-            {
-                prk.Clear();
-            }
-        }
-
-
-        private static unsafe int PerformExtraction(HashAlgorithmName hashAlgorithmName, int hashOutputLength, ReadOnlySpan<byte> ikm, ReadOnlySpan<byte> salt, Span<byte> prk)
-        {
-            int bytesExtracted;
-
-            byte[] saltBytes = new byte[salt.Length];
-            fixed (byte* saltBytesPointer = saltBytes)
-            {
-                salt.CopyTo(saltBytes);
-                try
-                {
-                    // Using incremental HMAC because it is faster than non-incremental.
-
-                    using (var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, saltBytes))
-                    {
-                        hmac.AppendData(ikm);
-
-                        // The method is supposed to always return true, because the destination buffer will always be large enough to accommodate the HMAC value (https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1).
-                        // However, we still check the returned value just to be on the safe side.
-
-                        if (!hmac.TryGetHashAndReset(prk, out bytesExtracted))
-                            throw new CryptographicException($"Failed to compute the MAC during the Extract stage of HKDF.");
-                    }
-                }
-                finally
-                {
-                    ClearArray(saltBytes);
-                }
-            }
-
-            return bytesExtracted;
-        }
-
-        private static unsafe void PerformExpansion(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, ReadOnlySpan<byte> prk, Span<byte> output, ReadOnlySpan<byte> info)
-        {
-            Span<byte> counter = stackalloc byte[1];
-            Span<byte> previousBlock = Span<byte>.Empty;
-            byte[] prkBytes = new byte[prk.Length];
-            fixed (byte* prkBytesPointer = prkBytes)
-            {
-                prk.CopyTo(prkBytes);
-                try
-                {
-                    using var hmac = CreateIncrementalHmac(hashAlgorithmName, prkBytes);
-
-                    int wholeBlockCount = output.Length / hmacOutputLength;
-                    for (int i = 1; i <= wholeBlockCount; i++)
-                    {
-                        counter[0] = (byte)i;
-                        var currentBlock = output.Slice((i - 1) * hmacOutputLength, hmacOutputLength);
-                        GenerateOutputBlock(hmac, previousBlock, info, counter, currentBlock);
-                        previousBlock = currentBlock;
-                    }
-
-                    int bytesWritten = wholeBlockCount * hmacOutputLength;
-                    int bytesLeft = output.Length - bytesWritten;
-                    if (bytesLeft > 0)
-                    {
-                        counter[0]++;
-                        Span<byte> partialBlock = stackalloc byte[hmacOutputLength];
-                        try
-                        {
-                            GenerateOutputBlock(hmac, previousBlock, info, counter, partialBlock);
-                            partialBlock.Slice(0, bytesLeft)
-                                        .CopyTo(output.Slice(bytesWritten));
-                        }
-                        finally
-                        {
-                            partialBlock.Clear();
-                        }
-                    }
-                }
-                finally
-                {
-                    ClearArray(prkBytes);
-                    counter.Clear();
-                }
-            }
-        }
-
-
         private static void GenerateOutputBlock(IncrementalHash hmac, ReadOnlySpan<byte> previousOutputBlock, ReadOnlySpan<byte> info, ReadOnlySpan<byte> counter, Span<byte> outputBlock)
         {
             hmac.AppendData(previousOutputBlock);
@@ -444,8 +439,11 @@ namespace HkdfStandard
             if (!hmac.TryGetHashAndReset(outputBlock, out _))
                 throw new CryptographicException("Failed to compute the MAC for the current HKDF block.");
         }
-
 #endif
-
+        
+        private static void ClearArray(byte[] array)
+        {
+            Array.Clear(array, 0, array.Length);
+        }
     }
 }
