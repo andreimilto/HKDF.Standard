@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3; netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3; netstandard2.1; net5.0</TargetFrameworks>
     <Authors>Andrei Milto</Authors>
     <Product>HKDF.Standard</Product>
     <Copyright>Copyright © Andrei Milto 2020</Copyright>
@@ -16,14 +16,19 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.1'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
-    <LangVersion>7.3</LangVersion>
+  <PropertyGroup Condition="'$(TargetFramework)'=='net5.0'">
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
 </Project>
