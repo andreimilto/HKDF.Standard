@@ -122,7 +122,29 @@ namespace HkdfStandard
             if (output.Length > hashOutputLength * maxOutputLengthCoef)
                 throw new ArgumentException($"The supplied output buffer is too large. The maximum size of the output buffer is {maxOutputLengthCoef} times the hash-output-length, i.e. {hashOutputLength * maxOutputLengthCoef} bytes in case of {hashAlgorithmName}.", nameof(output));
 
-            PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, output);
+            // If the output span and the info span overlap, writing to the output will modify the info;
+            // the following output blocks (if any) will be computed for a different info, rendering the output invalid.
+            // We overcome this by using a temporary buffer the size of the info or the output (whichever is the smallest).
+
+            if (output.Overlaps(info))
+            {
+                if (output.Length < info.Length)
+                {
+                    Span<byte> tempOutput = stackalloc byte[output.Length];
+                    PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, tempOutput);
+                    tempOutput.CopyTo(output);
+                }
+                else
+                {
+                    Span<byte> infoCopy = stackalloc byte[info.Length];
+                    info.CopyTo(infoCopy);
+                    PerformExpansion(hashAlgorithmName, hashOutputLength, prk, infoCopy, output);
+                }
+            }
+            else
+            {
+                PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, output);
+            }
         }
 #endif
 
@@ -182,7 +204,29 @@ namespace HkdfStandard
             if (output.Length > hashOutputLength * maxOutputLengthCoef)
                 throw new ArgumentException($"The supplied output buffer is too large. The maximum size of the output buffer is {maxOutputLengthCoef} times the hash-output-length, i.e. {hashOutputLength * maxOutputLengthCoef} bytes in case of {hashAlgorithmName}.", nameof(output));
 
-            PerformKeyDerivation(hashAlgorithmName, hashOutputLength, ikm, salt, info, output);
+            // If the output span and the info span overlap, writing to the output will modify the info;
+            // the following output blocks (if any) will be computed for a different info, rendering the output invalid.
+            // We overcome this by using a temporary buffer the size of the info or the output (whichever is the smallest).
+
+            if (output.Overlaps(info))
+            {
+                if (output.Length < info.Length)
+                {
+                    Span<byte> tempOutput = stackalloc byte[output.Length];
+                    PerformKeyDerivation(hashAlgorithmName, hashOutputLength, ikm, salt, info, tempOutput);
+                    tempOutput.CopyTo(output);
+                }
+                else
+                {
+                    Span<byte> infoCopy = stackalloc byte[info.Length];
+                    info.CopyTo(infoCopy);
+                    PerformKeyDerivation(hashAlgorithmName, hashOutputLength, ikm, salt, infoCopy, output);
+                }
+            }
+            else
+            {
+                PerformKeyDerivation(hashAlgorithmName, hashOutputLength, ikm, salt, info, output);
+            }
         }
 #endif
 
@@ -205,7 +249,7 @@ namespace HkdfStandard
             if (salt == null)
                 salt = Array.Empty<byte>();
 
-            // Using incremental HMAC because it is faster than non-incremental.
+            // We're using the incremental version of HMAC because it is faster than the non-incremental one.
 
             using (var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, salt))
             {
@@ -226,17 +270,19 @@ namespace HkdfStandard
                 {
                     salt.CopyTo(saltBytes);
 
-                    // Using incremental HMAC because it is faster than non-incremental.
+                    // We're using the incremental version of HMAC because it is faster than the non-incremental one.
 
                     using (var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, saltBytes))
                     {
                         hmac.AppendData(ikm);
 
-                        // The method is supposed to always return true, because the destination buffer will always be large enough to accommodate the HMAC value (https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1).
+                        // The method is supposed to always return true, because the destination buffer will always
+                        // be large enough to accommodate the HMAC value. See the docs:
+                        // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1
                         // However, we still check the returned value just to be on the safe side.
 
                         if (!hmac.TryGetHashAndReset(prk, out bytesExtracted))
-                            throw new CryptographicException($"Failed to compute the MAC during the Extract stage of HKDF.");
+                            throw new CryptographicException("Failed to compute the MAC during the Extract stage of HKDF.");
                     }
                 }
                 finally
@@ -256,11 +302,13 @@ namespace HkdfStandard
             {
                 hmac.AppendData(ikm);
 
-                // The method is supposed to always return true, because the destination buffer will always be large enough to accommodate the HMAC value (https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=net-5.0).
+                // The method is supposed to always return true, because the destination buffer will always
+                // be large enough to accommodate the HMAC value. See the docs:
+                // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=net-5.0
                 // However, we still check the returned value just to be on the safe side.
 
                 if (!hmac.TryGetHashAndReset(prk, out bytesExtracted))
-                    throw new CryptographicException($"Failed to compute the MAC during the Extract stage of HKDF.");
+                    throw new CryptographicException("Failed to compute the MAC during the Extract stage of HKDF.");
             }
 
             return bytesExtracted;
@@ -534,7 +582,10 @@ namespace HkdfStandard
             hmac.AppendData(info);
             hmac.AppendData(counter);
 
-            // The method is supposed to always return true, because the destination buffer will always be large enough to accommodate the HMAC value (https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1).
+            // The method is supposed to always return true, because the destination buffer will always
+            // be large enough to accommodate the HMAC value. See the docs:
+            // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1
+            // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=net-5.0
             // However, we still check the returned value just to be on the safe side.
 
             if (!hmac.TryGetHashAndReset(outputBlock, out _))
