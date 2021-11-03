@@ -167,16 +167,16 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 
 ## Platform Support
 
-[`byte[]` methods](#byte-methods) are available on the platforms that support [.NET Standard 1.6](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support):
+[`byte[]` methods](#byte-methods) are available on the platforms that support [.NET Standard 1.3](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support):
 * **.NET 5** and higher
 * **.NET Core 1.0** and higher
-* **.NET Framework 4.6.1** and higher
+* **.NET Framework 4.6** and higher
 * **Mono 4.6** and higher
 * **Blazor WebAssembly 3.2.0** and higher, [except for **5.x.x**](https://docs.microsoft.com/en-us/dotnet/core/compatibility/cryptography/5.0/cryptography-apis-not-supported-on-blazor-webassembly)
 * **Xamarin.iOS 10.0** and higher
 * **Xamarin.Mac 3.0** and higher
 * **Xamarin.Android 7.0** and higher
-* **UWP 10.0.16299** and higher
+* **UWP 10.0** and higher
 * **Unity 2018.1** and higher
 
 [`Span<byte>` methods](#spanbyte-methods) are available on the platforms that support [.NET Standard 2.1](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support):
