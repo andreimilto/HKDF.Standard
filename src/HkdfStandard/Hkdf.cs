@@ -23,6 +23,11 @@ namespace HkdfStandard
         /// </summary>
         private const int maxOutputLengthCoef = 255;
 
+        /// <summary>
+        /// The maximum size of a temporary buffer allocated on the stack in bytes.
+        /// </summary>
+        private const int maxStackallocBufferSize = 256;
+
 
         /// <summary>
         /// Extracts a pseudorandom key from the provided input key material using an optional salt value.
@@ -128,22 +133,48 @@ namespace HkdfStandard
 
             if (output.Overlaps(info))
             {
-                if (output.Length < info.Length)
+                int bufferSize = Math.Min(output.Length, info.Length);
+                if (bufferSize <= maxStackallocBufferSize)
                 {
-                    Span<byte> tempOutput = stackalloc byte[output.Length];
-                    PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, tempOutput);
-                    tempOutput.CopyTo(output);
+                    Span<byte> buffer = stackalloc byte[bufferSize];
+                    PerformExpansionWithOverlappingInfoAndOutput(hashAlgorithmName, hashOutputLength, prk, info, output, buffer);
                 }
                 else
                 {
-                    Span<byte> infoCopy = stackalloc byte[info.Length];
-                    info.CopyTo(infoCopy);
-                    PerformExpansion(hashAlgorithmName, hashOutputLength, prk, infoCopy, output);
+                    Span<byte> buffer = new byte[bufferSize];
+                    unsafe
+                    {
+                        fixed (byte* bufferPointer = buffer)
+                        {
+                            PerformExpansionWithOverlappingInfoAndOutput(hashAlgorithmName, hashOutputLength, prk, info, output, buffer);
+                        }
+                    }
                 }
             }
             else
             {
                 PerformExpansion(hashAlgorithmName, hashOutputLength, prk, info, output);
+            }
+
+            static void PerformExpansionWithOverlappingInfoAndOutput(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, ReadOnlySpan<byte> prk, ReadOnlySpan<byte> info, Span<byte> output, Span<byte> buffer)
+            {
+                try
+                {
+                    if (output.Length < info.Length)
+                    {
+                        PerformExpansion(hashAlgorithmName, hmacOutputLength, prk, info, buffer);
+                        buffer.CopyTo(output);
+                    }
+                    else
+                    {
+                        info.CopyTo(buffer);
+                        PerformExpansion(hashAlgorithmName, hmacOutputLength, prk, buffer, output);
+                    }
+                }
+                finally
+                {
+                    Clear(buffer);
+                }
             }
         }
 #endif
@@ -210,22 +241,48 @@ namespace HkdfStandard
 
             if (output.Overlaps(info))
             {
-                if (output.Length < info.Length)
+                int bufferSize = Math.Min(output.Length, info.Length);
+                if (bufferSize <= maxStackallocBufferSize)
                 {
-                    Span<byte> tempOutput = stackalloc byte[output.Length];
-                    PerformKeyDerivation(hashAlgorithmName, hashOutputLength, ikm, salt, info, tempOutput);
-                    tempOutput.CopyTo(output);
+                    Span<byte> buffer = stackalloc byte[bufferSize];
+                    PerformKeyDerivationWithOverlappingInfoAndOutput(hashAlgorithmName, hashOutputLength, ikm, salt, info, output, buffer);
                 }
                 else
                 {
-                    Span<byte> infoCopy = stackalloc byte[info.Length];
-                    info.CopyTo(infoCopy);
-                    PerformKeyDerivation(hashAlgorithmName, hashOutputLength, ikm, salt, infoCopy, output);
+                    Span<byte> buffer = new byte[bufferSize];
+                    unsafe
+                    {
+                        fixed (byte* bufferPointer = buffer)
+                        {
+                            PerformKeyDerivationWithOverlappingInfoAndOutput(hashAlgorithmName, hashOutputLength, ikm, salt, info, output, buffer);
+                        }
+                    }
                 }
             }
             else
             {
                 PerformKeyDerivation(hashAlgorithmName, hashOutputLength, ikm, salt, info, output);
+            }
+
+            static void PerformKeyDerivationWithOverlappingInfoAndOutput(HashAlgorithmName hashAlgorithmName, int hmacOutputLength, ReadOnlySpan<byte> ikm, ReadOnlySpan<byte> salt, ReadOnlySpan<byte> info, Span<byte> output, Span<byte> buffer)
+            {
+                try
+                {
+                    if (output.Length < info.Length)
+                    {
+                        PerformKeyDerivation(hashAlgorithmName, hmacOutputLength, ikm, salt, info, buffer);
+                        buffer.CopyTo(output);
+                    }
+                    else
+                    {
+                        info.CopyTo(buffer);
+                        PerformKeyDerivation(hashAlgorithmName, hmacOutputLength, ikm, salt, buffer, output);
+                    }
+                }
+                finally
+                {
+                    Clear(buffer);
+                }
             }
         }
 #endif

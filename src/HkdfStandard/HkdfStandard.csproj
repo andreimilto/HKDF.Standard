@@ -27,6 +27,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net5.0'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
