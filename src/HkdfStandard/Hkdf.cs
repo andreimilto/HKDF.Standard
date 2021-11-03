@@ -318,8 +318,6 @@ namespace HkdfStandard
 #if NETSTANDARD2_1
         private static unsafe int PerformExtraction(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> ikm, ReadOnlySpan<byte> salt, Span<byte> prk)
         {
-            int bytesExtracted;
-
             byte[] saltBytes = new byte[salt.Length];
             fixed (byte* saltBytesPointer = saltBytes)
             {
@@ -329,44 +327,40 @@ namespace HkdfStandard
 
                     // We're using the incremental version of HMAC because it is faster than the non-incremental one.
 
-                    using (var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, saltBytes))
-                    {
-                        hmac.AppendData(ikm);
+                    using var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, saltBytes);
+                    hmac.AppendData(ikm);
 
-                        // The method is supposed to always return true, because the destination buffer will always
-                        // be large enough to accommodate the HMAC value. See the docs:
-                        // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1
-                        // However, we still check the returned value just to be on the safe side.
+                    // The method is supposed to always return true, because the destination buffer will always
+                    // be large enough to accommodate the HMAC value. See the docs:
+                    // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=netstandard-2.1
+                    // However, we still check the returned value just to be on the safe side.
 
-                        if (!hmac.TryGetHashAndReset(prk, out bytesExtracted))
-                            throw new CryptographicException("Failed to compute the MAC during the Extract stage of HKDF.");
-                    }
+                    if (!hmac.TryGetHashAndReset(prk, out int bytesExtracted))
+                        throw new CryptographicException("Failed to compute the MAC during the Extract stage of HKDF.");
+
+                    return bytesExtracted;
                 }
                 finally
                 {
                     Clear(saltBytes);
                 }
             }
-
-            return bytesExtracted;
         }
 #elif NET5_0
         private static int PerformExtraction(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> ikm, ReadOnlySpan<byte> salt, Span<byte> prk)
         {
-            int bytesExtracted;
+            // We're using the incremental version of HMAC because it is faster than the non-incremental one.
 
-            using (var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, salt))
-            {
-                hmac.AppendData(ikm);
+            using var hmac = IncrementalHash.CreateHMAC(hashAlgorithmName, salt);
+            hmac.AppendData(ikm);
 
-                // The method is supposed to always return true, because the destination buffer will always
-                // be large enough to accommodate the HMAC value. See the docs:
-                // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=net-5.0
-                // However, we still check the returned value just to be on the safe side.
+            // The method is supposed to always return true, because the destination buffer will always
+            // be large enough to accommodate the HMAC value. See the docs:
+            // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.incrementalhash.trygethashandreset?view=net-5.0
+            // However, we still check the returned value just to be on the safe side.
 
-                if (!hmac.TryGetHashAndReset(prk, out bytesExtracted))
-                    throw new CryptographicException("Failed to compute the MAC during the Extract stage of HKDF.");
-            }
+            if (!hmac.TryGetHashAndReset(prk, out int bytesExtracted))
+                throw new CryptographicException("Failed to compute the MAC during the Extract stage of HKDF.");
 
             return bytesExtracted;
         }
