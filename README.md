@@ -144,7 +144,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * ```csharp
   byte[] DeriveKey(HashAlgorithmName hashAlgorithmName, byte[] ikm, int outputLength, byte[]? salt = null, byte[]? info = null);
   ```
-  Derives an output keying material from the input key material (performs extraction and extension) in one go.
+  Derives an output keying material from the input key material (performs extraction and expansion) in one go.
 
 
 ### `Span<byte>` Methods
@@ -162,7 +162,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * ```csharp
   void DeriveKey(HashAlgorithmName hashAlgorithmName, ReadOnlySpan<byte> ikm, Span<byte> output, ReadOnlySpan<byte> salt, ReadOnlySpan<byte> info);
   ```
-  Derives an output keying material from the input key material (performs extraction and extension) in one go.
+  Derives an output keying material from the input key material (performs extraction and expansion) in one go.
 
 
 ## Platform Support
