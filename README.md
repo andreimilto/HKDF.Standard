@@ -78,16 +78,16 @@ For information about:
 ## Performance
 
 Based on the results of key derivation benchmark, **HKDF.Standard** is:
-* **2.6 - 6.7 times faster** than **NSec**
-* **1.3 - 5.1 times faster** than **Bouncy Castle**
-* **practically on par** with **.NET 5**, being about **3% - 19% slower**
+* **2.7 - 7.4 times faster** than **NSec**
+* **1.4 - 5.8 times faster** than **Bouncy Castle**
+* **on par** with **.NET 5** &ndash; perfomance difference does **not exceed &plusmn;10%**
 
 ![Chart: derivation of 128-bit key](/img/Chart_KeyDerivation_128bit.png)
 ![Chart: derivation of 4096-bit key](/img/Chart_KeyDerivation_4096bit.png)
 
 *256-bit input key material, 256-bit salt, 256-bit context information*
 
-*Windows 10 Pro x64, .NET 5.0, AMD Ryzen 7 Pro 1700X, single thread, [Portable.BouncyCastle v1.8.8](https://www.nuget.org/packages/Portable.BouncyCastle/1.8.8),
+*Windows 10 Pro x64, .NET 5.0, AMD Ryzen 7 Pro 1700X, single thread, [Portable.BouncyCastle v1.9.0](https://www.nuget.org/packages/Portable.BouncyCastle/1.9.0),
 [NSec v20.2.0](https://www.nuget.org/packages/NSec.Cryptography/20.2.0)*
 
 *The benchmark source code is available at* [`src/HkdfStandard.Benchmark`](https://github.com/andreimilto/HKDF.Standard/tree/main/src/HkdfStandard.Benchmark)
