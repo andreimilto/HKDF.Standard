@@ -40,7 +40,7 @@ Use the methods of the `Hkdf` class to perform extraction, expansion and key der
 
 ```csharp
 using HkdfStandard;
-...
+using System.Security.Cryptography;
 
 // Input values:
 byte[] inputKeyMaterial = ...;
