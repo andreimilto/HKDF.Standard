@@ -171,7 +171,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **.NET Core 1.0** and higher
 * **.NET Framework 4.6** and higher
 * **Mono 4.6** and higher
-* **Blazor WebAssembly 3.2.0** and higher, [except for **5.x.x**](https://docs.microsoft.com/en-us/dotnet/core/compatibility/cryptography/5.0/cryptography-apis-not-supported-on-blazor-webassembly)
+* **Blazor WebAssembly 3.2.0** and higher, except for [**5.x.x** and **6.x.x**](https://docs.microsoft.com/en-us/dotnet/core/compatibility/cryptography/5.0/cryptography-apis-not-supported-on-blazor-webassembly) (support will be resumed in [**7.0.0**](https://github.com/dotnet/designs/blob/main/accepted/2021/blazor-wasm-crypto.md#net-7-plan))
 * **Xamarin.iOS 10.0** and higher
 * **Xamarin.Mac 3.0** and higher
 * **Xamarin.Android 7.0** and higher
@@ -182,7 +182,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **.NET&nbsp;5** and higher
 * **.NET Core 3.0** and higher
 * **Mono 6.4** and higher
-* **Blazor WebAssembly 3.2.0** and higher, [except for **5.x.x**](https://docs.microsoft.com/en-us/dotnet/core/compatibility/cryptography/5.0/cryptography-apis-not-supported-on-blazor-webassembly)
+* **Blazor WebAssembly 3.2.0** and higher, except for [**5.x.x** and **6.x.x**](https://docs.microsoft.com/en-us/dotnet/core/compatibility/cryptography/5.0/cryptography-apis-not-supported-on-blazor-webassembly) (support will be resumed in [**7.0.0**](https://github.com/dotnet/designs/blob/main/accepted/2021/blazor-wasm-crypto.md#net-7-plan))
 * **Xamarin.iOS 12.16** and higher
 * **Xamarin.Mac 5.16** and higher
 * **Xamarin.Android 10.0** and higher
