@@ -25,11 +25,11 @@
 * [High performance](#performance).
 * [`Span<byte>` support](#spanbyte-methods).
 * Can be [used with `ECDiffieHellman`](#using-hkdfstandard-with-ecdiffiehellman).
-* [Easy migration](#migration-to-and-from-nets-hkdf) to and from the new [HKDF primitive introduced in .NET 5](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hkdf?view=net-5.0).
+* [Easy migration](#migration-to-and-from-nets-hkdf) to and from the new [HKDF primitive introduced in .NET&nbsp;5](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hkdf?view=net-5.0).
 * [One-shot methods](#functionality) for extraction, expansion and key derivation.
 * Supported hash functions: SHA-512, SHA-384, SHA-256, SHA-1 and MD5.
-* Available in .NET 5 and .NET 6, .NET Core, .NET Framework, Mono, Blazor WebAssembly, Xamarin, UWP and Unity (see [platform support](#platform-support)).
-* Compliant with [RFC 5869](https://tools.ietf.org/html/rfc5869).
+* Available in .NET&nbsp;5 and .NET&nbsp;6, .NET Core, .NET Framework, Mono, Blazor WebAssembly, Xamarin, UWP and Unity (see [platform support](#platform-support)).
+* Compliant with [RFC&nbsp;5869](https://tools.ietf.org/html/rfc5869).
 
 
 ## Getting Started
@@ -69,9 +69,9 @@ outputKeyMaterial = Hkdf.DeriveKey(HashAlgorithmName.SHA256, inputKeyMaterial, o
 ```
 
 For information about:
-* when the `Extract` stage can be skipped, please refer to the [RFC 5869 section 3.3](https://tools.ietf.org/html/rfc5869#section-3.3);
-* how to use `salt` and when it can be omitted, see the [RFC 5869 section 3.1](https://tools.ietf.org/html/rfc5869#section-3.1);
-* how to use `info` and when it can be omitted, see the [RFC 5869 section 3.2](https://tools.ietf.org/html/rfc5869#section-3.2);
+* when the `Extract` stage can be skipped, please refer to the [RFC&nbsp;5869 section 3.3](https://tools.ietf.org/html/rfc5869#section-3.3);
+* how to use `salt` and when it can be omitted, see the [RFC&nbsp;5869 section 3.1](https://tools.ietf.org/html/rfc5869#section-3.1);
+* how to use `info` and when it can be omitted, see the [RFC&nbsp;5869 section 3.2](https://tools.ietf.org/html/rfc5869#section-3.2);
 * HKDF in general, please refer to the [original paper](https://eprint.iacr.org/2010/264.pdf).
 
 
@@ -80,14 +80,14 @@ For information about:
 Based on the results of key derivation benchmark, **HKDF.Standard** is:
 * **2.7 - 7.4 times faster** than **NSec**
 * **1.4 - 5.8 times faster** than **Bouncy Castle**
-* **on par** with **.NET 5** &ndash; perfomance difference does **not exceed &plusmn;10%**
+* **on par** with **.NET&nbsp;5** &ndash; perfomance difference does **not exceed &plusmn;10%**
 
 ![Chart: derivation of 128-bit key](/img/Chart_KeyDerivation_128bit.png)
 ![Chart: derivation of 4096-bit key](/img/Chart_KeyDerivation_4096bit.png)
 
 *256-bit input key material, 256-bit salt, 256-bit context information*
 
-*Windows 10 Pro x64, .NET 5.0, AMD Ryzen 7 Pro 1700X, single thread, [Portable.BouncyCastle v1.9.0](https://www.nuget.org/packages/Portable.BouncyCastle/1.9.0),
+*Windows 10 Pro x64, .NET&nbsp;5.0, AMD Ryzen 7 Pro 1700X, single thread, [Portable.BouncyCastle v1.9.0](https://www.nuget.org/packages/Portable.BouncyCastle/1.9.0),
 [NSec v20.2.0](https://www.nuget.org/packages/NSec.Cryptography/20.2.0)*
 
 *The benchmark source code is available at* [`src/HkdfStandard.Benchmark`](https://github.com/andreimilto/HKDF.Standard/tree/main/src/HkdfStandard.Benchmark)
@@ -96,7 +96,7 @@ Based on the results of key derivation benchmark, **HKDF.Standard** is:
 ## Migration to and from **.NET**'s HKDF
 
 * [Methods](#functionality) in the **HKDF.Standard** library have the same signatures as in the **.NET**'s [`HKDF` class](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hkdf?view=net-5.0), which makes it is simple to migrate from one HKDF implementation to the other.
-* Microsoft's implementation of HKDF will be available only in **.NET 5** and onwards. Consider using **HKDF.Standard** if your project targets one of the older frameworks. If later you decide to upgrade the project to **.NET 5** or **.NET 6**, it will be relatively easy to swap the implementation of HKDF with the Microsoft's, if necessary.
+* Microsoft's implementation of HKDF will be available only in **.NET&nbsp;5** and onwards. Consider using **HKDF.Standard** if your project targets one of the older frameworks. If later you decide to upgrade the project to **.NET&nbsp;5** or **.NET&nbsp;6**, it will be relatively easy to swap the implementation of HKDF with the Microsoft's, if necessary.
 
 
 ## Using **HKDF.Standard** with `ECDiffieHellman`
@@ -167,7 +167,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 ## Platform Support
 
 [`byte[]` methods](#byte-methods) are available on the platforms that support [.NET Standard 1.3](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support):
-* **.NET 5** and higher
+* **.NET&nbsp;5** and higher
 * **.NET Core 1.0** and higher
 * **.NET Framework 4.6** and higher
 * **Mono 4.6** and higher
@@ -179,7 +179,7 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **Unity 2018.1** and higher
 
 [`Span<byte>` methods](#spanbyte-methods) are available on the platforms that support [.NET Standard 2.1](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support):
-* **.NET 5** and higher
+* **.NET&nbsp;5** and higher
 * **.NET Core 3.0** and higher
 * **Mono 6.4** and higher
 * **Blazor WebAssembly 3.2.0** and higher, [except for **5.x.x**](https://docs.microsoft.com/en-us/dotnet/core/compatibility/cryptography/5.0/cryptography-apis-not-supported-on-blazor-webassembly)
