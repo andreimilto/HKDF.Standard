@@ -28,7 +28,7 @@
 * [Easy migration](#migration-to-and-from-nets-hkdf) to and from the new [HKDF primitive introduced in .NET&nbsp;5](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hkdf?view=net-5.0).
 * [One-shot methods](#functionality) for extraction, expansion and key derivation.
 * Supported hash functions: SHA-512, SHA-384, SHA-256, SHA-1 and MD5.
-* Available in .NET&nbsp;5 and .NET&nbsp;6, .NET Core, .NET Framework, Mono, Blazor WebAssembly, Xamarin, UWP and Unity (see [platform support](#platform-support)).
+* Available in .NET&nbsp;5 and higher, .NET Core, .NET Framework, Mono, Blazor WebAssembly, Xamarin, UWP and Unity (see [platform support](#platform-support)).
 * Compliant with [RFC&nbsp;5869](https://tools.ietf.org/html/rfc5869).
 
 
