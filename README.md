@@ -1,5 +1,5 @@
 <a href="https://www.nuget.org/packages/HKDF.Standard/">
-  <img src="https://img.shields.io/static/v1?label=Get%20Package&message=NuGet&color=brightgreen&style=plastic" height="28px" alt="Get NuGet Package">
+  <img src="https://img.shields.io/static/v1?label=%E2%AD%B3%20Get%20Package&message=NuGet&color=blue&style=plastic" height="28px" alt="Get NuGet Package">
 </a>
 
 <p>
