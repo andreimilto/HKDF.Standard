@@ -178,8 +178,8 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **Xamarin.iOS 10.0** and higher
 * **Xamarin.Mac 3.0** and higher
 * **Xamarin.Android 7.0** and higher
-* **UWP 10.0** and higher
 * **Unity 2018.1** and higher
+* **UWP 10.0** and higher
 
 [`Span<byte>` methods](#spanbyte-methods) are available on the platforms that support [.NET Standard 2.1](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support):
 * **.NET&nbsp;5** and higher
@@ -189,5 +189,5 @@ byte[] outputKeyMaterial = Hkdf.Expand(HashAlgorithmName.SHA256, pseudoRandomKey
 * **Xamarin.iOS 12.16** and higher
 * **Xamarin.Mac 5.16** and higher
 * **Xamarin.Android 10.0** and higher
+* **Unity 2021.2** and higher
 * **UWP** - currently not supported (expected in the future)
-* **Unity** - currently not supported (expected in the future)
